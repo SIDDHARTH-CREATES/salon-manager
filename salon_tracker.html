@@ -680,14 +680,12 @@ function saveDB() {
   syncTimer = setTimeout(() => syncToGSheets(), 2000);
 }
 
-// ── Sync entire db TO Google Sheets ──
+// ── Sync entire db TO Google Sheets (GET to avoid CORS) ──
 function syncToGSheets() {
   setSyncStatus('syncing');
-  fetch(GSHEET_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain' },
-    body: JSON.stringify({ action: 'syncAll', db: db })
-  })
+  const encoded = encodeURIComponent(JSON.stringify(db));
+  const url = GSHEET_URL + '?action=syncAll&data=' + encoded;
+  fetch(url)
   .then(r => r.json())
   .then(res => {
     if (res.status === 'ok') setSyncStatus('ok');
@@ -696,7 +694,7 @@ function syncToGSheets() {
   .catch(() => setSyncStatus('error'));
 }
 
-// ── Load data FROM Google Sheets (called on page open) ──
+// ── Load data FROM Google Sheets ──
 function loadFromGSheets() {
   setSyncStatus('syncing');
   fetch(GSHEET_URL + '?action=getData')
@@ -704,16 +702,13 @@ function loadFromGSheets() {
   .then(res => {
     if (res.status === 'ok' && res.data) {
       const remote = res.data;
-      // Merge: keep pin and admin settings from remote, data arrays from remote
-      const pin = remote.pin || db.pin || '1234';
-      const adminSvcs  = remote.adminSvcs  || db.adminSvcs  || [];
-      const adminProds = remote.adminProds || db.adminProds || [];
       db = {
         ...defaults,
         ...remote,
-        pin, adminSvcs, adminProds
+        pin: remote.pin || db.pin || '1234',
+        adminSvcs:  remote.adminSvcs  || db.adminSvcs  || [],
+        adminProds: remote.adminProds || db.adminProds || []
       };
-      // Save to localStorage so offline also works
       localStorage.setItem(STORE_KEY, JSON.stringify(db));
       refreshAll();
       setSyncStatus('ok');
@@ -721,27 +716,19 @@ function loadFromGSheets() {
       setSyncStatus('error');
     }
   })
-  .catch(() => {
-    // No internet — use localStorage data silently
-    setSyncStatus('error');
-  });
+  .catch(() => setSyncStatus('error'));
 }
 
-// ── Manual full sync button ──
+// ── Manual sync button ──
 function manualSync() {
-  // First push local data up, then pull fresh data down
   setSyncStatus('syncing');
-  fetch(GSHEET_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain' },
-    body: JSON.stringify({ action: 'syncAll', db: db })
-  })
+  const encoded = encodeURIComponent(JSON.stringify(db));
+  const url = GSHEET_URL + '?action=syncAll&data=' + encoded;
+  fetch(url)
   .then(r => r.json())
   .then(res => {
-    if (res.status === 'ok') {
-      // After push, pull back to stay in sync
-      setTimeout(() => loadFromGSheets(), 1000);
-    } else setSyncStatus('error');
+    if (res.status === 'ok') setTimeout(() => loadFromGSheets(), 1000);
+    else setSyncStatus('error');
   })
   .catch(() => setSyncStatus('error'));
 }
