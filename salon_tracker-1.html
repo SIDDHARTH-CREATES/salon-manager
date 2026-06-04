@@ -1,0 +1,1608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Salon Manager Pro</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --bg:#0a0a0c;--s1:#111114;--s2:#18181d;--s3:#1f1f26;--s4:#26262f;
+  --gold:#d4a843;--gold2:#f0c96a;--gold3:rgba(212,168,67,.13);
+  --rose:#c45f78;--rose2:rgba(196,95,120,.13);
+  --sage:#5f9e7e;--sage2:rgba(95,158,126,.12);
+  --blue:#5b8ec9;--blue2:rgba(91,142,201,.12);
+  --text:#ede8e0;--t2:#9d9088;--t3:#5a5250;
+  --bdr:rgba(212,168,67,.15);--bdr2:rgba(237,232,224,.07);
+  --r:10px;--r2:6px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;overflow-x:hidden}
+
+/* ─── HEADER ─── */
+.hdr{background:linear-gradient(135deg,var(--s1),#15120e);border-bottom:1px solid var(--bdr);padding:14px 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-gem{width:38px;height:38px;background:linear-gradient(135deg,var(--gold),var(--rose));border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.logo-name{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--gold2);letter-spacing:.3px}
+.logo-tag{font-size:10px;color:var(--t3);letter-spacing:2px;text-transform:uppercase}
+.hdr-right{display:flex;align-items:center;gap:12px}
+.hdr-date{font-size:12px;color:var(--t3);text-align:right}
+.hdr-date strong{display:block;font-size:14px;color:var(--t2);font-weight:500}
+.badge-saved{background:var(--sage2);border:1px solid var(--sage);color:var(--sage);padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;letter-spacing:.5px;transition:opacity .4s}
+.badge-saved.hidden{opacity:0}
+
+/* ─── TABS ─── */
+.nav{display:flex;align-items:center;background:var(--s1);border-bottom:1px solid var(--bdr2);padding:0 28px;overflow-x:auto;gap:0}
+.nav-btn{padding:11px 18px;background:transparent;border:none;border-bottom:2px solid transparent;color:var(--t3);font-family:'Outfit',sans-serif;font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap;transition:all .2s;letter-spacing:.2px}
+.nav-btn:hover{color:var(--t2)}
+.nav-btn.on{color:var(--gold2);border-bottom-color:var(--gold)}
+.nav-btn.admin-btn{margin-left:auto;color:var(--rose);border-bottom-color:transparent}
+.nav-btn.admin-btn.on{color:var(--rose);border-bottom-color:var(--rose)}
+
+/* ─── PAGE ─── */
+.page{display:none;padding:24px 28px;animation:fadeUp .2s ease}
+.page.on{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+
+/* ─── SECTION HEADER ─── */
+.sec-hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:22px;gap:12px;flex-wrap:wrap}
+.sec-title{font-family:'Playfair Display',serif;font-size:24px;font-weight:600;color:var(--gold2)}
+.sec-sub{font-size:11px;color:var(--t3);margin-top:3px;letter-spacing:.8px;text-transform:uppercase}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+/* ─── STAT CARDS ─── */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-bottom:22px}
+.card{background:var(--s2);border:1px solid var(--bdr2);border-radius:var(--r);padding:18px;position:relative;overflow:hidden;transition:border-color .2s,transform .2s;cursor:default}
+.card:hover{border-color:var(--bdr);transform:translateY(-1px)}
+.card::after{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.card.g::after{background:linear-gradient(90deg,var(--gold),var(--gold2))}
+.card.r::after{background:linear-gradient(90deg,var(--rose),#e8859a)}
+.card.s::after{background:linear-gradient(90deg,var(--sage),#82c4a2)}
+.card.b::after{background:linear-gradient(90deg,var(--blue),#82b4e8)}
+.c-ico{position:absolute;right:14px;top:14px;font-size:20px;opacity:.22}
+.c-lbl{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px}
+.c-val{font-size:24px;font-weight:600;font-family:'Playfair Display',serif;color:var(--text)}
+.c-sub{font-size:11px;color:var(--t3);margin-top:3px}
+
+/* ─── PANEL ─── */
+.panel{background:var(--s2);border:1px solid var(--bdr2);border-radius:var(--r);margin-bottom:18px;overflow:hidden}
+.panel-hdr{padding:12px 18px;background:var(--s3);border-bottom:1px solid var(--bdr2);display:flex;align-items:center;justify-content:space-between}
+.panel-title{font-size:12px;font-weight:600;color:var(--gold);letter-spacing:.8px;text-transform:uppercase}
+.panel-body{padding:18px}
+
+/* ─── FORMS ─── */
+.fgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px;margin-bottom:14px}
+.fg{display:flex;flex-direction:column;gap:4px}
+label{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:1px}
+input,select,textarea{background:var(--s1);border:1px solid var(--bdr2);border-radius:var(--r2);color:var(--text);font-family:'Outfit',sans-serif;font-size:13px;padding:8px 11px;transition:border-color .2s,box-shadow .2s;outline:none;width:100%}
+input:focus,select:focus,textarea:focus{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold3)}
+select option{background:var(--s2)}
+input[type=time],input[type=date]{color-scheme:dark}
+input[readonly]{color:var(--t2);cursor:default}
+
+/* ─── BUTTONS ─── */
+.btn{padding:8px 16px;border:none;border-radius:var(--r2);font-family:'Outfit',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:5px;letter-spacing:.2px;white-space:nowrap}
+.btn-g{background:linear-gradient(135deg,var(--gold),#b8872e);color:#0a0a0c}
+.btn-g:hover{background:linear-gradient(135deg,var(--gold2),var(--gold));transform:translateY(-1px);box-shadow:0 4px 14px rgba(212,168,67,.3)}
+.btn-r{background:linear-gradient(135deg,var(--rose),#a8405a);color:#fff}
+.btn-r:hover{opacity:.9;transform:translateY(-1px)}
+.btn-b{background:linear-gradient(135deg,var(--blue),#3d6ea8);color:#fff}
+.btn-b:hover{opacity:.9;transform:translateY(-1px)}
+.btn-xl{background:linear-gradient(135deg,#1a5c38,#217346);color:#fff;font-size:13px}
+.btn-xl:hover{opacity:.9;transform:translateY(-1px);box-shadow:0 4px 12px rgba(33,115,70,.4)}
+.btn-ghost{background:transparent;border:1px solid var(--bdr);color:var(--t2)}
+.btn-ghost:hover{border-color:var(--gold);color:var(--gold)}
+.btn-del{background:var(--rose2);color:var(--rose);border:1px solid rgba(196,95,120,.25);padding:4px 10px;font-size:11px}
+.btn-del:hover{background:rgba(196,95,120,.25)}
+.btn-sm{padding:5px 11px;font-size:12px}
+
+/* ─── TABLES ─── */
+.twrap{overflow-x:auto;border-radius:8px;border:1px solid var(--bdr2)}
+table{width:100%;border-collapse:collapse}
+thead th{background:var(--s3);padding:9px 13px;text-align:left;font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid var(--bdr2);white-space:nowrap}
+tbody tr{border-bottom:1px solid var(--bdr2);transition:background .15s}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:rgba(212,168,67,.03)}
+tbody td{padding:9px 13px;font-size:13px;color:var(--t2);vertical-align:middle}
+.erow td{text-align:center;color:var(--t3);padding:24px;font-style:italic}
+
+/* ─── BADGES ─── */
+.badge{display:inline-flex;align-items:center;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600;letter-spacing:.3px}
+.bg-cash{background:var(--sage2);color:var(--sage)}
+.bg-online{background:var(--blue2);color:var(--blue)}
+.bg-ok{background:var(--sage2);color:var(--sage)}
+.bg-low{background:rgba(212,168,67,.15);color:var(--gold)}
+.bg-out{background:var(--rose2);color:var(--rose)}
+.bg-f{background:var(--gold3);color:var(--gold2)}
+.bg-m{background:var(--blue2);color:var(--blue)}
+
+/* ─── DIVIDER ─── */
+hr.div{border:none;border-top:1px solid var(--bdr2);margin:16px 0}
+
+/* ─── SUMMARY STRIP ─── */
+.sum-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:14px}
+.sum-item{background:var(--s3);border-radius:8px;padding:12px;text-align:center}
+.s-lbl{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:1px}
+.s-val{font-size:19px;font-weight:600;font-family:'Playfair Display',serif;margin-top:3px}
+.vg{color:var(--sage)}.vr{color:var(--rose)}.vo{color:var(--gold2)}
+
+/* ─── STOCK BAR ─── */
+.sbar-wrap{width:55px;background:var(--s1);border-radius:3px;height:5px;overflow:hidden;display:inline-block;vertical-align:middle}
+.sbar{height:5px;border-radius:3px;transition:width .4s}
+
+/* ─── ALERT BOX ─── */
+.abox{padding:11px 15px;border-radius:8px;font-size:13px;margin-bottom:12px}
+.abox-w{background:rgba(212,168,67,.1);border:1px solid rgba(212,168,67,.25);color:var(--gold2)}
+.abox-r{background:var(--rose2);border:1px solid rgba(196,95,120,.3);color:var(--rose)}
+
+/* ─── EXPENSE PRODUCT FIELDS (conditional) ─── */
+.exp-pf{display:none}
+.exp-pf.show{display:contents}
+
+/* ─── ADMIN OVERLAY ─── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:500;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.overlay.on{display:flex}
+.modal{background:var(--s2);border:1px solid var(--bdr);border-radius:14px;width:min(480px,92vw);max-height:88vh;overflow-y:auto;padding:28px;position:relative}
+.modal-title{font-family:'Playfair Display',serif;font-size:22px;color:var(--gold2);margin-bottom:6px}
+.modal-sub{font-size:12px;color:var(--t3);margin-bottom:22px;letter-spacing:.5px}
+.modal-close{position:absolute;top:16px;right:16px;background:var(--rose2);border:none;color:var(--rose);width:28px;height:28px;border-radius:6px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center}
+.modal-close:hover{background:rgba(196,95,120,.3)}
+
+/* ─── PIN OVERLAY ─── */
+.pin-dots{display:flex;gap:10px;justify-content:center;margin:20px 0}
+.dot{width:14px;height:14px;border-radius:50%;background:var(--s4);border:2px solid var(--bdr2);transition:all .2s}
+.dot.fill{background:var(--gold);border-color:var(--gold)}
+.pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:220px;margin:0 auto}
+.pin-key{padding:14px;background:var(--s3);border:1px solid var(--bdr2);border-radius:8px;color:var(--text);font-size:18px;font-weight:600;cursor:pointer;text-align:center;transition:all .15s}
+.pin-key:hover{background:var(--s4);border-color:var(--gold);color:var(--gold)}
+.pin-err{color:var(--rose);font-size:13px;text-align:center;min-height:20px;margin-top:8px}
+
+/* ─── ADMIN TABS ─── */
+.atabs{display:flex;gap:4px;margin-bottom:18px;flex-wrap:wrap}
+.atab{padding:7px 14px;background:var(--s3);border:1px solid var(--bdr2);border-radius:6px;color:var(--t2);font-size:12px;font-weight:500;cursor:pointer;transition:all .2s}
+.atab.on{background:var(--gold3);border-color:var(--gold);color:var(--gold2)}
+
+/* ─── TAG CHIPS ─── */
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{background:var(--s3);border:1px solid var(--bdr2);border-radius:20px;padding:4px 12px;font-size:12px;color:var(--t2);display:flex;align-items:center;gap:6px}
+.chip button{background:none;border:none;color:var(--t3);cursor:pointer;font-size:14px;line-height:1;padding:0}
+.chip button:hover{color:var(--rose)}
+
+/* ─── SCROLLBAR ─── */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--s1)}
+::-webkit-scrollbar-thumb{background:var(--s4);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--t3)}
+
+@media(max-width:600px){
+  .hdr,.nav{padding-left:14px;padding-right:14px}
+  .page{padding:14px}
+  .cards{grid-template-columns:1fr 1fr}
+  .fgrid{grid-template-columns:1fr}
+  .sec-hdr{flex-direction:column}
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════ HEADER ══════════ -->
+<div class="hdr">
+  <div class="logo">
+    <div class="logo-gem">✦</div>
+    <div>
+      <div class="logo-name">Salon Manager Pro</div>
+      <div class="logo-tag">Business Intelligence Suite</div>
+    </div>
+  </div>
+  <div class="hdr-right">
+    <button onclick="manualSync()" class="btn btn-ghost" style="font-size:12px;padding:5px 12px">↑ Sync Now</button>
+    <span class="badge-saved hidden" id="savedBadge">● Saved</span>
+    <div class="hdr-date">
+      <span id="hdrDate">—</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ NAV ══════════ -->
+<div class="nav">
+  <button class="nav-btn on"  onclick="goTab('dashboard',this)">◈ Dashboard</button>
+  <button class="nav-btn"     onclick="goTab('cashflow',this)">◈ Cash Flow</button>
+  <button class="nav-btn"     onclick="goTab('attendance',this)">◈ Attendance</button>
+  <button class="nav-btn"     onclick="goTab('staffwork',this)">◈ Staff Work</button>
+  <button class="nav-btn"     onclick="goTab('stock',this)">◈ Stock</button>
+  <button class="nav-btn admin-btn" onclick="openAdmin()">⚙ Admin</button>
+</div>
+
+<!-- ══════════════════════════════════════
+     DASHBOARD
+══════════════════════════════════════ -->
+<div id="pg-dashboard" class="page on">
+  <div class="sec-hdr">
+    <div><div class="sec-title">Dashboard</div><div class="sec-sub">Real-time overview • Auto-updated from all tabs</div></div>
+    <div class="btn-row">
+      <button class="btn btn-xl" onclick="exportAll()">⬇ Export Everything (Master Excel)</button>
+    </div>
+  </div>
+
+  <div class="cards">
+    <div class="card g"><div class="c-ico">💰</div><div class="c-lbl">Cash Inflow</div><div class="c-val" id="d-cash">₹0</div><div class="c-sub">Cash payments</div></div>
+    <div class="card b"><div class="c-ico">📱</div><div class="c-lbl">Online Inflow</div><div class="c-val" id="d-online">₹0</div><div class="c-sub">UPI / Card</div></div>
+    <div class="card r"><div class="c-ico">📤</div><div class="c-lbl">Expenses</div><div class="c-val" id="d-exp">₹0</div><div class="c-sub">Total outflow</div></div>
+    <div class="card s"><div class="c-ico">✦</div><div class="c-lbl">Net Balance</div><div class="c-val" id="d-net">₹0</div><div class="c-sub">Revenue − Expenses</div></div>
+  </div>
+  <div class="cards">
+    <div class="card g"><div class="c-ico">👥</div><div class="c-lbl">Staff on Record</div><div class="c-val" id="d-staff">0</div><div class="c-sub">Registered staff</div></div>
+    <div class="card r"><div class="c-ico">👤</div><div class="c-lbl">Total Clients</div><div class="c-val" id="d-clients">0</div><div class="c-sub">Services recorded</div></div>
+    <div class="card s"><div class="c-ico">📦</div><div class="c-lbl">Stock Alerts</div><div class="c-val" id="d-alerts">0</div><div class="c-sub">Low / out of stock</div></div>
+    <div class="card b"><div class="c-ico">🛎</div><div class="c-lbl">Services Done</div><div class="c-val" id="d-svcs">0</div><div class="c-sub">All time</div></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-hdr"><span class="panel-title">⚡ Stock Alerts</span></div>
+    <div class="panel-body" id="dashAlerts"><p style="color:var(--t3);font-size:13px;font-style:italic">All products well stocked ✓</p></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-hdr"><span class="panel-title">💹 Financial Summary</span></div>
+    <div class="panel-body">
+      <div class="sum-row">
+        <div class="sum-item"><div class="s-lbl">Total Revenue</div><div class="s-val vo" id="ds-rev">₹0</div></div>
+        <div class="sum-item"><div class="s-lbl">Cash</div><div class="s-val vg" id="ds-cash">₹0</div></div>
+        <div class="sum-item"><div class="s-lbl">Online</div><div class="s-val vg" id="ds-online">₹0</div></div>
+        <div class="sum-item"><div class="s-lbl">Expenses</div><div class="s-val vr" id="ds-exp">₹0</div></div>
+        <div class="sum-item"><div class="s-lbl">Net Balance</div><div class="s-val vo" id="ds-net">₹0</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     CASH FLOW
+══════════════════════════════════════ -->
+<div id="pg-cashflow" class="page">
+  <div class="sec-hdr">
+    <div><div class="sec-title">Cash Flow</div><div class="sec-sub">Client services • Expenses • Daily totals</div></div>
+    <button class="btn btn-xl" onclick="exportSheet('cashflow')">⬇ Export Cash Flow</button>
+  </div>
+
+  <!-- Client Service Entry -->
+  <div class="panel">
+    <div class="panel-hdr"><span class="panel-title">💄 Add Client Service</span></div>
+    <div class="panel-body">
+      <div class="fgrid">
+        <div class="fg"><label>Client Name</label><input id="cf-client" placeholder="Client name" list="clientList"></div>
+        <datalist id="clientList"></datalist>
+        <div class="fg"><label>Service Type</label><input id="cf-service" placeholder="e.g. Haircut, Facial" list="serviceList"></div>
+        <datalist id="serviceList"></datalist>
+        <div class="fg"><label>Cost (₹)</label><input type="number" id="cf-cost" placeholder="0" min="0"></div>
+        <div class="fg"><label>Payment Mode</label><select id="cf-mode"><option>Cash</option><option>Online</option></select></div>
+        <div class="fg"><label>Staff Assigned</label><input id="cf-staff" placeholder="Staff name" list="staffList"></div>
+        <datalist id="staffList"></datalist>
+        <div class="fg"><label>Date</label><input type="date" id="cf-date"></div>
+      </div>
+      <div class="btn-row"><button class="btn btn-g" onclick="addService()">+ Add Service</button></div>
+      <hr class="div">
+      <div class="twrap">
+        <table>
+          <thead><tr><th>#</th><th>Date</th><th>Client</th><th>Service</th><th>Cost</th><th>Mode</th><th>Staff</th><th>Action</th></tr></thead>
+          <tbody id="svcTbody"><tr class="erow"><td colspan="8">No services recorded yet</td></tr></tbody>
+        </table>
+      </div>
+      <div class="sum-row">
+        <div class="sum-item"><div class="s-lbl">Clients</div><div class="s-val vo" id="cf-cnt">0</div></div>
+        <div class="sum-item"><div class="s-lbl">Cash</div><div class="s-val vg" id="cf-cash">₹0</div></div>
+        <div class="sum-item"><div class="s-lbl">Online</div><div class="s-val vg" id="cf-onl">₹0</div></div>
+        <div class="sum-item"><div class="s-lbl">Total Revenue</div><div class="s-val vo" id="cf-tot">₹0</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Expenses -->
+  <div class="panel">
+    <div class="panel-hdr"><span class="panel-title">📤 Add Expense</span></div>
+    <div class="panel-body">
+      <div class="fgrid">
+        <div class="fg">
+          <label>Expense Type</label>
+          <select id="exp-type" onchange="toggleExpPF()">
+            <option>Product Purchase</option><option>Electricity Bill</option>
+            <option>Rent</option><option>Salaries</option><option>Miscellaneous</option>
+          </select>
+        </div>
+        <div class="fg"><label>Description / Product Name</label><input id="exp-desc" placeholder="Description" list="productList"></div>
+        <datalist id="productList"></datalist>
+        <div class="fg exp-pf show" id="epQty"><label>Qty Purchased</label><input type="number" id="exp-qty" placeholder="e.g. 10" min="0"></div>
+        <div class="fg exp-pf show" id="epUnit"><label>Unit (ml / pcs…)</label><input id="exp-unit" placeholder="e.g. bottles"></div>
+        <div class="fg"><label>Amount (₹)</label><input type="number" id="exp-amount" placeholder="0" min="0"></div>
+        <div class="fg"><label>Date</label><input type="date" id="exp-date"></div>
+      </div>
+      <div class="btn-row"><button class="btn btn-r" onclick="addExpense()">+ Add Expense</button></div>
+      <hr class="div">
+      <div class="twrap">
+        <table>
+          <thead><tr><th>#</th><th>Date</th><th>Type</th><th>Description</th><th>Qty</th><th>Unit</th><th>Amount</th><th>Action</th></tr></thead>
+          <tbody id="expTbody"><tr class="erow"><td colspan="8">No expenses recorded yet</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Daily Summary -->
+  <div class="panel">
+    <div class="panel-hdr"><span class="panel-title">📊 Daily Summary</span></div>
+    <div class="panel-body">
+      <div class="sum-row">
+        <div class="sum-item"><div class="s-lbl">Cash Inflow</div><div class="s-val vg" id="cf-s-cash">₹0</div></div>
+        <div class="sum-item"><div class="s-lbl">Online Inflow</div><div class="s-val vg" id="cf-s-onl">₹0</div></div>
+        <div class="sum-item"><div class="s-lbl">Total Expenses</div><div class="s-val vr" id="cf-s-exp">₹0</div></div>
+        <div class="sum-item"><div class="s-lbl">Net Balance</div><div class="s-val vo" id="cf-s-net">₹0</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     ATTENDANCE
+══════════════════════════════════════ -->
+<div id="pg-attendance" class="page">
+  <div class="sec-hdr">
+    <div><div class="sec-title">Staff Attendance</div><div class="sec-sub">Present • Absent • Half-Day • Leave • Hours tracking</div></div>
+    <button class="btn btn-xl" onclick="exportSheet('attendance')">⬇ Export Attendance</button>
+  </div>
+  <div class="panel">
+    <div class="panel-hdr"><span class="panel-title">🕐 Mark Attendance</span></div>
+    <div class="panel-body">
+      <div class="fgrid">
+        <div class="fg"><label>Staff Name</label><input id="att-name" placeholder="Full name" list="staffList2"></div>
+        <datalist id="staffList2"></datalist>
+        <div class="fg"><label>Gender</label><select id="att-gender"><option>Female</option><option>Male</option><option>Other</option></select></div>
+        <div class="fg"><label>Date</label><input type="date" id="att-date"></div>
+        <div class="fg">
+          <label>Status</label>
+          <select id="att-status" onchange="toggleAttTime()">
+            <option value="Present">✅ Present</option>
+            <option value="Half-Day">🌓 Half-Day</option>
+            <option value="Absent">❌ Absent</option>
+            <option value="Leave">🏖 Leave</option>
+          </select>
+        </div>
+        <div class="fg" id="attInWrap"><label>In Time</label><input type="time" id="att-in"></div>
+        <div class="fg" id="attOutWrap"><label>Out Time</label><input type="time" id="att-out"></div>
+        <div class="fg" id="attReasonWrap" style="display:none"><label>Reason / Note</label><input id="att-reason" placeholder="e.g. Sick leave, Personal"></div>
+      </div>
+      <div class="btn-row"><button class="btn btn-g" onclick="addAttendance()">+ Mark Attendance</button></div>
+      <hr class="div">
+      <div class="twrap">
+        <table>
+          <thead><tr><th>#</th><th>Date</th><th>Staff Name</th><th>Gender</th><th>Status</th><th>In Time</th><th>Out Time</th><th>Hours Worked</th><th>Reason</th><th>Action</th></tr></thead>
+          <tbody id="attTbody"><tr class="erow"><td colspan="10">No attendance records yet</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Attendance Summary Panel -->
+  <div class="panel">
+    <div class="panel-hdr"><span class="panel-title">📊 Attendance Summary</span></div>
+    <div class="panel-body">
+      <div class="sum-row">
+        <div class="sum-item"><div class="s-lbl">Total Records</div><div class="s-val vo" id="att-total">0</div></div>
+        <div class="sum-item"><div class="s-lbl">Present</div><div class="s-val vg" id="att-present">0</div></div>
+        <div class="sum-item"><div class="s-lbl">Half-Day</div><div class="s-val" style="color:var(--gold)" id="att-half">0</div></div>
+        <div class="sum-item"><div class="s-lbl">Absent</div><div class="s-val vr" id="att-absent">0</div></div>
+        <div class="sum-item"><div class="s-lbl">On Leave</div><div class="s-val" style="color:var(--blue)" id="att-leave">0</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     STAFF WORK
+══════════════════════════════════════ -->
+<div id="pg-staffwork" class="page">
+  <div class="sec-hdr">
+    <div><div class="sec-title">Staff Work Entry</div><div class="sec-sub">Services handled • Products sold • Revenue per staff</div></div>
+    <button class="btn btn-xl" onclick="exportSheet('staffwork')">⬇ Export Staff Work</button>
+  </div>
+
+  <!-- Services auto-pulled from Cash Flow -->
+  <div class="panel">
+    <div class="panel-hdr">
+      <span class="panel-title">✂ Services by Staff</span>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:11px;color:var(--t3)">Filter:</span>
+        <input id="sw-filter" placeholder="All staff" list="staffList3" style="width:150px;padding:5px 10px;font-size:12px;background:var(--s1);border:1px solid var(--bdr2);border-radius:5px;color:var(--text);outline:none" oninput="renderSwSvcs()">
+        <datalist id="staffList3"></datalist>
+      </div>
+    </div>
+    <div class="panel-body">
+      <div class="abox abox-w" style="font-size:12px;margin-bottom:14px">
+        ℹ️ <strong>No double entry needed!</strong> Services are auto-pulled from <strong>Cash Flow</strong> tab. Just fill "Staff Assigned" field when adding a service there.
+      </div>
+      <div class="twrap">
+        <table>
+          <thead><tr><th>#</th><th>Date</th><th>Staff</th><th>Client</th><th>Service</th><th>Amount</th><th>Mode</th></tr></thead>
+          <tbody id="swSvcTbody"><tr class="erow"><td colspan="7">No services with staff assigned yet</td></tr></tbody>
+        </table>
+      </div>
+      <div class="sum-row" style="margin-top:12px">
+        <div class="sum-item"><div class="s-lbl">Filtered Services</div><div class="s-val vo" id="sw-svc-cnt">0</div></div>
+        <div class="sum-item"><div class="s-lbl">Services Revenue</div><div class="s-val vg" id="sw-svc-amt">&#8377;0</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-hdr"><span class="panel-title">🛍 Products Sold by Staff</span></div>
+    <div class="panel-body">
+      <div class="fgrid">
+        <div class="fg"><label>Staff Name</label><input id="sp-staff" placeholder="Staff name" list="staffList4"></div>
+        <datalist id="staffList4"></datalist>
+        <div class="fg"><label>Product Name</label><input id="sp-product" placeholder="Product" list="productList2"></div>
+        <datalist id="productList2"></datalist>
+        <div class="fg"><label>Quantity</label><input type="number" id="sp-qty" placeholder="0" min="1"></div>
+        <div class="fg"><label>Amount (₹)</label><input type="number" id="sp-amt" placeholder="0" min="0"></div>
+        <div class="fg"><label>Payment Mode</label><select id="sp-mode"><option>Cash</option><option>Online</option></select></div>
+        <div class="fg"><label>Date</label><input type="date" id="sp-date"></div>
+      </div>
+      <div class="btn-row"><button class="btn btn-g" onclick="addSwProd()">+ Add Product Sale</button></div>
+      <hr class="div">
+      <div class="twrap">
+        <table>
+          <thead><tr><th>#</th><th>Date</th><th>Staff</th><th>Product</th><th>Qty</th><th>Amount</th><th>Mode</th><th>Action</th></tr></thead>
+          <tbody id="swProdTbody"><tr class="erow"><td colspan="8">No entries yet</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-hdr"><span class="panel-title">📊 Revenue per Staff (Summary)</span></div>
+    <div class="panel-body">
+      <div class="twrap">
+        <table>
+          <thead><tr><th>Staff Name</th><th>Services Revenue</th><th>Products Revenue</th><th>Total Contribution</th></tr></thead>
+          <tbody id="swRevTbody"><tr class="erow"><td colspan="4">No data yet</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     STOCK
+══════════════════════════════════════ -->
+<div id="pg-stock" class="page">
+  <div class="sec-hdr">
+    <div><div class="sec-title">Stock Management</div><div class="sec-sub">Received • Used • Low-stock alerts</div></div>
+    <button class="btn btn-xl" onclick="exportSheet('stock')">⬇ Export Stock</button>
+  </div>
+
+  <div class="panel">
+    <div class="panel-hdr"><span class="panel-title">📦 Add / Restock Product</span></div>
+    <div class="panel-body">
+      <div class="fgrid">
+        <div class="fg"><label>Product Name</label><input id="st-name" placeholder="Product name" list="productList3"></div>
+        <datalist id="productList3"></datalist>
+        <div class="fg"><label>Category</label><input id="st-cat" placeholder="e.g. Hair Care, Skin"></div>
+        <div class="fg"><label>Qty Received</label><input type="number" id="st-qty" placeholder="0" min="0"></div>
+        <div class="fg"><label>Unit</label><input id="st-unit" placeholder="ml / pcs / kg"></div>
+        <div class="fg"><label>Cost (₹)</label><input type="number" id="st-cost" placeholder="0" min="0"></div>
+        <div class="fg"><label>Alert when below</label><input type="number" id="st-alert" placeholder="e.g. 5" min="0"></div>
+        <div class="fg"><label>Date Received</label><input type="date" id="st-date"></div>
+      </div>
+      <div class="btn-row"><button class="btn btn-g" onclick="addStock()">+ Add to Stock</button></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-hdr"><span class="panel-title">🔧 Record Daily Usage</span></div>
+    <div class="panel-body">
+      <div class="fgrid">
+        <div class="fg"><label>Product Name</label><input id="su-name" placeholder="Product name" list="stockDL"></div>
+        <datalist id="stockDL"></datalist>
+        <div class="fg"><label>Qty Used</label><input type="number" id="su-qty" placeholder="0" min="1"></div>
+        <div class="fg"><label>Date</label><input type="date" id="su-date"></div>
+      </div>
+      <div class="btn-row"><button class="btn btn-r" onclick="useStock()">− Record Usage</button></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-hdr"><span class="panel-title">📋 Current Stock Levels</span></div>
+    <div class="panel-body">
+      <div class="twrap">
+        <table>
+          <thead><tr><th>#</th><th>Product</th><th>Category</th><th>Received</th><th>Used</th><th>Balance</th><th>Unit</th><th>Alert At</th><th>Cost (₹)</th><th>Status</th><th>Action</th></tr></thead>
+          <tbody id="stTbody"><tr class="erow"><td colspan="11">No products in stock</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-hdr"><span class="panel-title">📅 Usage History</span></div>
+    <div class="panel-body">
+      <div class="twrap">
+        <table>
+          <thead><tr><th>#</th><th>Date</th><th>Product</th><th>Qty Used</th></tr></thead>
+          <tbody id="usageTbody"><tr class="erow"><td colspan="4">No usage recorded</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     PIN OVERLAY
+══════════════════════════════════════ -->
+<div class="overlay" id="pinOverlay">
+  <div class="modal" style="max-width:360px;text-align:center">
+    <div class="modal-title" style="margin-bottom:4px">🔐 Admin Access</div>
+    <div class="modal-sub">Enter your 4-digit PIN to continue</div>
+    <div class="pin-dots">
+      <div class="dot" id="pd0"></div><div class="dot" id="pd1"></div>
+      <div class="dot" id="pd2"></div><div class="dot" id="pd3"></div>
+    </div>
+    <div class="pin-pad">
+      <div class="pin-key" onclick="pinPress('1')">1</div>
+      <div class="pin-key" onclick="pinPress('2')">2</div>
+      <div class="pin-key" onclick="pinPress('3')">3</div>
+      <div class="pin-key" onclick="pinPress('4')">4</div>
+      <div class="pin-key" onclick="pinPress('5')">5</div>
+      <div class="pin-key" onclick="pinPress('6')">6</div>
+      <div class="pin-key" onclick="pinPress('7')">7</div>
+      <div class="pin-key" onclick="pinPress('8')">8</div>
+      <div class="pin-key" onclick="pinPress('9')">9</div>
+      <div class="pin-key" onclick="pinPress('C')" style="font-size:14px">⌫</div>
+      <div class="pin-key" onclick="pinPress('0')">0</div>
+      <div class="pin-key" onclick="document.getElementById('pinOverlay').classList.remove('on')" style="font-size:13px;color:var(--t3)">✕</div>
+    </div>
+    <div class="pin-err" id="pinErr"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     ADMIN OVERLAY
+══════════════════════════════════════ -->
+<div class="overlay" id="adminOverlay">
+  <div class="modal">
+    <button class="modal-close" onclick="document.getElementById('adminOverlay').classList.remove('on')">✕</button>
+    <div class="modal-title">⚙ Admin Panel</div>
+    <div class="modal-sub">MANAGE STAFF • SERVICES • PRODUCTS • SETTINGS</div>
+
+    <div class="atabs">
+      <div class="atab on" onclick="aTab('staff',this)">👥 Staff</div>
+      <div class="atab" onclick="aTab('services',this)">✂ Services</div>
+      <div class="atab" onclick="aTab('products',this)">📦 Products</div>
+      <div class="atab" onclick="aTab('settings',this)">⚙ Settings</div>
+    </div>
+
+    <!-- STAFF -->
+    <div id="aStaff">
+      <div class="fgrid" style="grid-template-columns:1fr 1fr">
+        <div class="fg"><label>Staff Name</label><input id="a-sname" placeholder="Full name"></div>
+        <div class="fg"><label>Gender</label><select id="a-sgender"><option>Female</option><option>Male</option><option>Other</option></select></div>
+      </div>
+      <div class="btn-row" style="margin-bottom:12px"><button class="btn btn-g btn-sm" onclick="addStaff()">+ Add Staff</button></div>
+      <div class="chips" id="staffChips"></div>
+    </div>
+
+    <!-- SERVICES -->
+    <div id="aServices" style="display:none">
+      <div class="fgrid" style="grid-template-columns:1fr 1fr">
+        <div class="fg"><label>Service Name</label><input id="a-svname" placeholder="e.g. Haircut"></div>
+        <div class="fg"><label>Default Price (₹)</label><input type="number" id="a-svprice" placeholder="0" min="0"></div>
+      </div>
+      <div class="btn-row" style="margin-bottom:12px"><button class="btn btn-g btn-sm" onclick="addAdminSvc()">+ Add Service</button></div>
+      <div class="chips" id="svcChips"></div>
+    </div>
+
+    <!-- PRODUCTS -->
+    <div id="aProducts" style="display:none">
+      <div class="fgrid" style="grid-template-columns:1fr 1fr">
+        <div class="fg"><label>Product Name</label><input id="a-pname" placeholder="e.g. Hair Serum"></div>
+        <div class="fg"><label>Category</label><input id="a-pcat" placeholder="e.g. Hair Care"></div>
+      </div>
+      <div class="btn-row" style="margin-bottom:12px"><button class="btn btn-g btn-sm" onclick="addAdminProd()">+ Add Product</button></div>
+      <div class="chips" id="prodChips"></div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div id="aSettings" style="display:none">
+      <div class="fg" style="margin-bottom:14px">
+        <label>Change Admin PIN (4 digits)</label>
+        <input type="password" id="a-pin1" placeholder="New PIN" maxlength="4" style="max-width:180px">
+      </div>
+      <div class="fg" style="margin-bottom:14px">
+        <label>Confirm New PIN</label>
+        <input type="password" id="a-pin2" placeholder="Confirm PIN" maxlength="4" style="max-width:180px">
+      </div>
+      <div class="btn-row" style="margin-bottom:16px">
+        <button class="btn btn-g btn-sm" onclick="changePin()">Update PIN</button>
+        <span id="pinMsg" style="font-size:12px;color:var(--sage)"></span>
+      </div>
+      <hr class="div">
+      <p style="font-size:12px;color:var(--t3);margin-bottom:12px">⚠ Danger zone — this action cannot be undone</p>
+      <button class="btn btn-r btn-sm" onclick="clearAllData()">🗑 Clear All Data</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     JAVASCRIPT
+══════════════════════════════════════ -->
+<script>
+// ═══════════════════════════════════════
+// CONFIG — Google Sheets Sync
+// ═══════════════════════════════════════
+const GSHEET_URL = 'https://script.google.com/macros/s/AKfycbwN9w4BtBzVDjaSVEk5xKkyU8rRgPZBeUSdIwo_CFOgZZJqqwJP-Hyd5jQC67WQ3ZYu/exec';
+
+// ═══════════════════════════════════════
+// DATA — localStorage + Google Sheets
+// ═══════════════════════════════════════
+const STORE_KEY = 'salonProData_v1';
+
+const defaults = {
+  pin: '1234',
+  staff: [],
+  adminSvcs: [],
+  adminProds: [],
+  services: [],
+  expenses: [],
+  attendance: [],
+  swProds: [],
+  stock: [],
+  usage: []
+};
+
+let db = JSON.parse(JSON.stringify(defaults));
+let syncTimer = null; // debounce GSheets sync
+
+// ── Load from localStorage ──
+function loadDB() {
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (raw) db = {...defaults, ...JSON.parse(raw)};
+  } catch(e) {}
+}
+
+// ── Save: localStorage instantly + GSheets debounced ──
+function saveDB() {
+  try {
+    localStorage.setItem(STORE_KEY, JSON.stringify(db));
+    flashSaved('saving');
+  } catch(e) {}
+  // Debounce — sync to GSheets 2s after last change
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(() => syncToGSheets(), 2000);
+}
+
+// ── Sync entire db TO Google Sheets (GET to avoid CORS) ──
+function syncToGSheets() {
+  setSyncStatus('syncing');
+  const encoded = encodeURIComponent(JSON.stringify(db));
+  const url = GSHEET_URL + '?action=syncAll&data=' + encoded;
+  fetch(url)
+  .then(r => r.json())
+  .then(res => {
+    if (res.status === 'ok') setSyncStatus('ok');
+    else setSyncStatus('error');
+  })
+  .catch(() => setSyncStatus('error'));
+}
+
+// ── Load data FROM Google Sheets ──
+function loadFromGSheets() {
+  setSyncStatus('syncing');
+  fetch(GSHEET_URL + '?action=getData')
+  .then(r => r.json())
+  .then(res => {
+    if (res.status === 'ok' && res.data) {
+      const remote = res.data;
+      db = {
+        ...defaults,
+        ...remote,
+        pin: remote.pin || db.pin || '1234',
+        adminSvcs:  remote.adminSvcs  || db.adminSvcs  || [],
+        adminProds: remote.adminProds || db.adminProds || []
+      };
+      localStorage.setItem(STORE_KEY, JSON.stringify(db));
+      refreshAll();
+      setSyncStatus('ok');
+    } else {
+      setSyncStatus('error');
+    }
+  })
+  .catch(() => setSyncStatus('error'));
+}
+
+// ── Manual sync button ──
+function manualSync() {
+  setSyncStatus('syncing');
+  const encoded = encodeURIComponent(JSON.stringify(db));
+  const url = GSHEET_URL + '?action=syncAll&data=' + encoded;
+  fetch(url)
+  .then(r => r.json())
+  .then(res => {
+    if (res.status === 'ok') setTimeout(() => loadFromGSheets(), 1000);
+    else setSyncStatus('error');
+  })
+  .catch(() => setSyncStatus('error'));
+}
+
+// ── Status badge ──
+function setSyncStatus(state) {
+  const el = document.getElementById('savedBadge');
+  el.classList.remove('hidden');
+  clearTimeout(window._savedTO);
+  if (state === 'saving') {
+    el.style.background='rgba(91,142,201,.15)';
+    el.style.borderColor='#5b8ec9';
+    el.style.color='#5b8ec9';
+    el.textContent='● Saving…';
+  } else if (state === 'syncing') {
+    el.style.background='rgba(212,168,67,.13)';
+    el.style.borderColor='#d4a843';
+    el.style.color='#d4a843';
+    el.textContent='↑ Syncing…';
+  } else if (state === 'ok') {
+    el.style.background='rgba(95,158,126,.12)';
+    el.style.borderColor='#5f9e7e';
+    el.style.color='#5f9e7e';
+    el.textContent='✓ Synced to Sheets';
+    window._savedTO = setTimeout(() => el.classList.add('hidden'), 3000);
+  } else if (state === 'error') {
+    el.style.background='rgba(196,95,120,.13)';
+    el.style.borderColor='#c45f78';
+    el.style.color='#c45f78';
+    el.textContent='⚠ Sync failed (saved locally)';
+    window._savedTO = setTimeout(() => el.classList.add('hidden'), 4000);
+  }
+}
+
+function flashSaved(state) {
+  setSyncStatus(state || 'ok');
+}
+
+// ═══════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════
+function td() { return new Date().toISOString().split('T')[0]; }
+
+window.onload = () => {
+  loadDB(); // load localStorage first (instant, offline fallback)
+  document.getElementById('hdrDate').textContent =
+    new Date().toLocaleDateString('en-IN',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  ['cf-date','exp-date','att-date','sp-date','su-date','st-date']
+    .forEach(id => { const el=document.getElementById(id); if(el) el.value=td(); });
+  toggleExpPF();
+  toggleAttTime();
+  refreshAll(); // render localStorage data immediately
+  // Then pull latest from GSheets (overwrites with fresh data)
+  setTimeout(() => loadFromGSheets(), 1500);
+};
+
+function refreshAll() {
+  refreshDataLists();
+  renderSvcs(); renderExps(); updateCFSummary();
+  renderAtt();
+  renderSwSvcs(); renderSwProds(); updateSwRev();
+  renderStock(); renderUsage();
+  updateDash();
+  renderAdminChips();
+}
+
+// ═══════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════
+function goTab(name, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('on'));
+  document.querySelectorAll('.nav-btn:not(.admin-btn)').forEach(b => b.classList.remove('on'));
+  document.getElementById('pg-'+name).classList.add('on');
+  if (btn) btn.classList.add('on');
+  if (name==='dashboard') updateDash();
+  if (name==='staffwork') { renderSwSvcs(); updateSwRev(); }
+  if (name==='stock') renderStock();
+  if (name==='cashflow') { updateCFSummary(); refreshDataLists(); }
+}
+
+// ═══════════════════════════════════════
+// DATA LISTS (autocomplete)
+// ═══════════════════════════════════════
+function refreshDataLists() {
+  const staffNames = db.staff.map(s => s.name);
+  ['staffList','staffList2','staffList3','staffList4'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = staffNames.map(n=>`<option value="${n}">`).join('');
+  });
+  const svcNames = db.adminSvcs.map(s => s.name);
+  ['serviceList','serviceList2'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = svcNames.map(n=>`<option value="${n}">`).join('');
+  });
+  const prodNames = db.adminProds.map(p => p.name);
+  ['productList','productList2','productList3'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = prodNames.map(n=>`<option value="${n}">`).join('');
+  });
+  // Populate clientList from past service entries
+  const clientNames = [...new Set(db.services.map(s=>s.client).filter(Boolean))];
+  const cl = document.getElementById('clientList');
+  if (cl) cl.innerHTML = clientNames.map(n=>`<option value="${n}">`).join('');
+  // Stock datalist
+  const stockNames = db.stock.map(s => s.name);
+  const sdl = document.getElementById('stockDL');
+  if (sdl) sdl.innerHTML = stockNames.map(n=>`<option value="${n}">`).join('');
+}
+
+// ═══════════════════════════════════════
+// EXPENSE FIELD TOGGLE
+// ═══════════════════════════════════════
+function toggleExpPF() {
+  const isProd = document.getElementById('exp-type').value === 'Product Purchase';
+  document.getElementById('epQty').classList.toggle('show', isProd);
+  document.getElementById('epUnit').classList.toggle('show', isProd);
+  if (!isProd) {
+    document.getElementById('exp-qty').value='';
+    document.getElementById('exp-unit').value='';
+  }
+}
+
+// ═══════════════════════════════════════
+// CASH FLOW — SERVICES
+// ═══════════════════════════════════════
+function addService() {
+  const client  = v('cf-client'), service = v('cf-service');
+  const cost    = n('cf-cost'), mode = v('cf-mode');
+  const staff   = v('cf-staff'), date = v('cf-date');
+  if (!client||!service||cost<=0) return alert('Fill Client Name, Service and Cost');
+  db.services.push({client,service,cost,mode,staff,date});
+  saveDB(); renderSvcs(); updateCFSummary(); updateDash();
+  renderSwSvcs(); updateSwRev(); refreshDataLists(); // keep Staff Work & autocomplete in sync
+  clear('cf-client','cf-service','cf-cost','cf-staff');
+}
+
+function renderSvcs() {
+  const tb = document.getElementById('svcTbody');
+  if (!db.services.length) { tb.innerHTML='<tr class="erow"><td colspan="8">No services recorded yet</td></tr>'; return; }
+  tb.innerHTML = db.services.map((r,i) => `
+    <tr>
+      <td>${i+1}</td><td>${r.date}</td><td><strong>${r.client}</strong></td><td>${r.service}</td>
+      <td><strong>₹${r.cost.toLocaleString()}</strong></td>
+      <td><span class="badge ${r.mode==='Cash'?'bg-cash':'bg-online'}">${r.mode}</span></td>
+      <td>${r.staff||'—'}</td>
+      <td><button class="btn btn-del" onclick="del('services',${i})">✕</button></td>
+    </tr>`).join('');
+}
+
+function updateCFSummary() {
+  // Services inflow
+  const svcCash   = db.services.filter(s=>s.mode==='Cash').reduce((a,s)=>a+s.cost,0);
+  const svcOnline = db.services.filter(s=>s.mode==='Online').reduce((a,s)=>a+s.cost,0);
+  // Product sales inflow
+  const prodCash   = db.swProds.filter(p=>(p.mode||'Cash')==='Cash').reduce((a,p)=>a+p.amount,0);
+  const prodOnline = db.swProds.filter(p=>p.mode==='Online').reduce((a,p)=>a+p.amount,0);
+
+  const cash   = svcCash + prodCash;
+  const online = svcOnline + prodOnline;
+  const exp    = db.expenses.reduce((a,e)=>a+e.amount,0);
+  const net    = cash+online-exp;
+
+  set('cf-cnt', db.services.length);
+  set('cf-cash','₹'+cash.toLocaleString());
+  set('cf-onl', '₹'+online.toLocaleString());
+  set('cf-tot', '₹'+(cash+online).toLocaleString());
+  set('cf-s-cash','₹'+cash.toLocaleString());
+  set('cf-s-onl', '₹'+online.toLocaleString());
+  set('cf-s-exp', '₹'+exp.toLocaleString());
+  const nel = document.getElementById('cf-s-net');
+  if (nel) { nel.textContent='₹'+net.toLocaleString(); nel.className='s-val '+(net>=0?'vo':'vr'); }
+}
+
+// ═══════════════════════════════════════
+// CASH FLOW — EXPENSES
+// ═══════════════════════════════════════
+function addExpense() {
+  const type   = v('exp-type'), desc = v('exp-desc');
+  const isProd = type==='Product Purchase';
+  const qty    = isProd ? (n('exp-qty')||0) : null;
+  const unit   = isProd ? v('exp-unit') : '';
+  const amount = n('exp-amount'), date = v('exp-date');
+  if (amount<=0) return alert('Enter a valid amount');
+  if (isProd && qty<=0) return alert('Enter quantity purchased');
+  db.expenses.push({type,desc,qty,unit,amount,date});
+  saveDB(); renderExps(); updateCFSummary(); updateDash();
+  clear('exp-desc','exp-qty','exp-unit','exp-amount');
+}
+
+function renderExps() {
+  const tb = document.getElementById('expTbody');
+  if (!db.expenses.length) { tb.innerHTML='<tr class="erow"><td colspan="8">No expenses recorded yet</td></tr>'; return; }
+  tb.innerHTML = db.expenses.map((r,i) => `
+    <tr>
+      <td>${i+1}</td><td>${r.date}</td><td>${r.type}</td><td>${r.desc||'—'}</td>
+      <td>${r.qty??'—'}</td><td>${r.unit||'—'}</td>
+      <td><strong style="color:var(--rose)">₹${r.amount.toLocaleString()}</strong></td>
+      <td><button class="btn btn-del" onclick="del('expenses',${i})">✕</button></td>
+    </tr>`).join('');
+}
+
+// ═══════════════════════════════════════
+// ATTENDANCE
+// ═══════════════════════════════════════
+function toggleAttTime() {
+  const status = document.getElementById('att-status').value;
+  const showTime = status === 'Present' || status === 'Half-Day';
+  const showReason = status === 'Absent' || status === 'Leave' || status === 'Half-Day';
+  document.getElementById('attInWrap').style.display  = showTime ? '' : 'none';
+  document.getElementById('attOutWrap').style.display = showTime ? '' : 'none';
+  document.getElementById('attReasonWrap').style.display = showReason ? '' : 'none';
+  if (!showTime) { document.getElementById('att-in').value=''; document.getElementById('att-out').value=''; }
+}
+
+function addAttendance() {
+  const name=v('att-name'), gender=v('att-gender'), date=v('att-date');
+  const status=v('att-status'), reason=v('att-reason');
+  const inT=v('att-in'), outT=v('att-out');
+  if (!name||!date) return alert('Enter staff name and date');
+  let hours='—';
+  if ((status==='Present'||status==='Half-Day') && inT && outT) {
+    const [ih,im]=inT.split(':').map(Number), [oh,om]=outT.split(':').map(Number);
+    const diff=(oh*60+om)-(ih*60+im);
+    if (diff>0) hours=(diff/60).toFixed(1)+' hrs';
+  }
+  if (status==='Half-Day' && hours==='—') hours='~4 hrs';
+  db.attendance.push({name,gender,date,status,inT,outT,hours,reason});
+  saveDB(); renderAtt(); updateDash();
+  clear('att-name','att-in','att-out','att-reason');
+}
+
+function renderAtt() {
+  const tb = document.getElementById('attTbody');
+  if (!db.attendance.length) { tb.innerHTML='<tr class="erow"><td colspan="10">No attendance records yet</td></tr>'; return; }
+  tb.innerHTML = db.attendance.map((r,i) => {
+    const status = r.status || 'Present'; // backward compat
+    const statusCfg = {
+      'Present':  {cls:'bg-ok',  icon:'✅'},
+      'Half-Day': {cls:'bg-low', icon:'🌓'},
+      'Absent':   {cls:'bg-out', icon:'❌'},
+      'Leave':    {cls:'bg-online', icon:'🏖'}
+    }[status] || {cls:'bg-ok', icon:'✅'};
+    return `
+    <tr>
+      <td>${i+1}</td><td>${r.date}</td><td><strong>${r.name}</strong></td>
+      <td><span class="badge ${r.gender==='Female'?'bg-f':r.gender==='Male'?'bg-m':'bg-ok'}">${r.gender}</span></td>
+      <td><span class="badge ${statusCfg.cls}">${statusCfg.icon} ${status}</span></td>
+      <td>${r.inT||'—'}</td><td>${r.outT||'—'}</td>
+      <td><strong style="color:var(--gold2)">${r.hours}</strong></td>
+      <td style="color:var(--t3);font-size:12px">${r.reason||'—'}</td>
+      <td><button class="btn btn-del" onclick="del('attendance',${i})">✕</button></td>
+    </tr>`;
+  }).join('');
+
+  // Update summary counts
+  const tot=db.attendance.length;
+  const cnt=s=>db.attendance.filter(r=>(r.status||'Present')===s).length;
+  document.getElementById('att-total').textContent   = tot;
+  document.getElementById('att-present').textContent = cnt('Present');
+  document.getElementById('att-half').textContent    = cnt('Half-Day');
+  document.getElementById('att-absent').textContent  = cnt('Absent');
+  document.getElementById('att-leave').textContent   = cnt('Leave');
+}
+
+// ═══════════════════════════════════════
+// STAFF WORK
+// ═══════════════════════════════════════
+// renderSwSvcs — auto-pulled from db.services (Cash Flow), filtered by staff name
+function renderSwSvcs() {
+  const tb = document.getElementById('swSvcTbody');
+  const filter = (document.getElementById('sw-filter')?.value||'').trim().toLowerCase();
+  // Only show services that have a staff assigned
+  let rows = db.services.filter(r => r.staff && r.staff.trim() !== '');
+  if (filter) rows = rows.filter(r => r.staff.toLowerCase().includes(filter));
+  if (!rows.length) {
+    tb.innerHTML='<tr class="erow"><td colspan="7">'+(filter?'No services found for this staff':'No services with staff assigned yet — add them in Cash Flow tab')+'</td></tr>';
+    document.getElementById('sw-svc-cnt').textContent = 0;
+    document.getElementById('sw-svc-amt').textContent = '₹0';
+    return;
+  }
+  tb.innerHTML = rows.map((r,i) => `
+    <tr>
+      <td>${i+1}</td><td>${r.date}</td><td><strong>${r.staff}</strong></td>
+      <td>${r.client}</td><td>${r.service||'—'}</td>
+      <td>₹${r.cost.toLocaleString()}</td>
+      <td><span class="badge ${r.mode==='Cash'?'bg-cash':'bg-online'}">${r.mode}</span></td>
+    </tr>`).join('');
+  const totalAmt = rows.reduce((a,r)=>a+r.cost,0);
+  document.getElementById('sw-svc-cnt').textContent = rows.length;
+  document.getElementById('sw-svc-amt').textContent = '₹'+totalAmt.toLocaleString();
+}
+
+function addSwProd() {
+  const staff   = v('sp-staff'), product = v('sp-product');
+  const qty     = parseInt(document.getElementById('sp-qty').value)||0;
+  const amount  = n('sp-amt'), date = v('sp-date');
+  const mode    = v('sp-mode');
+  if (!staff||!product||qty<=0) return alert('Fill all required fields');
+
+  // ── Auto-deduct from stock ──
+  const stockItem = db.stock.find(s => s.name.toLowerCase() === product.toLowerCase());
+  if (stockItem) {
+    const bal = stockItem.received - stockItem.used;
+    if (qty > bal) return alert(`Not enough stock! Only ${bal} ${stockItem.unit||'units'} available for "${product}"`);
+    stockItem.used += qty;
+    // Also log in usage history
+    db.usage.push({ name: product, qty, date, note: `Sold by ${staff}` });
+  }
+  // ── if product not found in stock, still save sale but warn ──
+  else {
+    if (!confirm(`"${product}" not found in Stock. Sale will be recorded but stock won't be deducted.\n\nProceed?`)) return;
+  }
+
+  db.swProds.push({staff, product, qty, amount, date, mode});
+  saveDB();
+  renderSwProds(); updateSwRev();
+  renderStock(); renderUsage(); // stock updated
+  updateCFSummary(); updateDash(); // cash inflow updated
+  clear('sp-product','sp-qty','sp-amt');
+}
+
+function renderSwProds() {
+  const tb = document.getElementById('swProdTbody');
+  if (!db.swProds.length) { tb.innerHTML='<tr class="erow"><td colspan="8">No entries yet</td></tr>'; return; }
+  tb.innerHTML = db.swProds.map((r,i) => `
+    <tr>
+      <td>${i+1}</td><td>${r.date}</td><td><strong>${r.staff}</strong></td>
+      <td>${r.product}</td><td>${r.qty}</td>
+      <td>₹${r.amount.toLocaleString()}</td>
+      <td><span class="badge ${(r.mode||'Cash')==='Cash'?'bg-cash':'bg-online'}">${r.mode||'Cash'}</span></td>
+      <td><button class="btn btn-del" onclick="del('swProds',${i})">✕</button></td>
+    </tr>`).join('');
+}
+
+function updateSwRev() {
+  const map={};
+  // Services pulled from Cash Flow — only entries with staff assigned
+  db.services.filter(r=>r.staff&&r.staff.trim()!=='').forEach(r=>{
+    if(!map[r.staff]) map[r.staff]={svc:0,prod:0};
+    map[r.staff].svc+=r.cost;
+  });
+  // Products sold — still entered separately in Staff Work
+  db.swProds.forEach(r=>{
+    if(!map[r.staff]) map[r.staff]={svc:0,prod:0};
+    map[r.staff].prod+=r.amount;
+  });
+  const tb=document.getElementById('swRevTbody'), ent=Object.entries(map);
+  if (!ent.length) { tb.innerHTML='<tr class="erow"><td colspan="4">No data yet — assign staff in Cash Flow tab</td></tr>'; return; }
+  tb.innerHTML=ent.map(([nm,val])=>`
+    <tr>
+      <td><strong>${nm}</strong></td>
+      <td style="color:var(--sage)">₹${val.svc.toLocaleString()}</td>
+      <td style="color:var(--blue)">₹${val.prod.toLocaleString()}</td>
+      <td style="color:var(--gold2);font-weight:600">₹${(val.svc+val.prod).toLocaleString()}</td>
+    </tr>`).join('');
+}
+
+// ═══════════════════════════════════════
+// STOCK
+// ═══════════════════════════════════════
+function addStock() {
+  const name=v('st-name'), cat=v('st-cat');
+  const qty=parseFloat(document.getElementById('st-qty').value)||0;
+  const unit=v('st-unit'), cost=parseFloat(document.getElementById('st-cost').value)||0;
+  const alertAt=parseFloat(document.getElementById('st-alert').value)||0;
+  const date=v('st-date');
+  if (!name||qty<=0) return alert('Enter product name and quantity');
+  const ex=db.stock.find(s=>s.name.toLowerCase()===name.toLowerCase());
+  if (ex) {
+    ex.received += qty;
+    if (cost)    ex.cost    = cost;
+    if (cat)     ex.cat     = cat;
+    if (unit)    ex.unit    = unit;
+    if (alertAt) ex.alertAt = alertAt;
+  } else {
+    db.stock.push({name, cat, received:qty, used:0, unit, cost, alertAt, date});
+  }
+  saveDB(); renderStock(); refreshDataLists(); updateDash();
+  clear('st-name','st-qty','st-cost','st-cat','st-unit','st-alert');
+}
+
+function useStock() {
+  const name=v('su-name'),qty=parseFloat(document.getElementById('su-qty').value)||0,date=v('su-date');
+  if (!name||qty<=0) return alert('Enter product name and quantity');
+  const item=db.stock.find(s=>s.name.toLowerCase()===name.toLowerCase());
+  if (!item) return alert('Product not found in stock');
+  const bal=item.received-item.used;
+  if (qty>bal) return alert('Not enough stock! Available: '+bal+' '+(item.unit||'units'));
+  item.used+=qty;
+  db.usage.push({name,qty,date});
+  saveDB(); renderStock(); renderUsage(); updateDash();
+  clear('su-name','su-qty');
+}
+
+function renderStock() {
+  const tb=document.getElementById('stTbody');
+  const dl=document.getElementById('stockDL');
+  if (dl) dl.innerHTML=db.stock.map(s=>`<option value="${s.name}">`).join('');
+  if (!db.stock.length) { tb.innerHTML='<tr class="erow"><td colspan="11">No products in stock</td></tr>'; return; }
+  tb.innerHTML=db.stock.map((r,i)=>{
+    const bal=r.received-r.used;
+    const pct=r.received>0?Math.max(0,Math.min(100,(bal/r.received)*100)):0;
+    let sc='bg-ok',sl='OK',bc='var(--sage)';
+    if (bal<=0){sc='bg-out';sl='OUT';bc='var(--rose)';}
+    else if(r.alertAt>0&&bal<=r.alertAt){sc='bg-low';sl='LOW';bc='var(--gold)';}
+    return `<tr>
+      <td>${i+1}</td><td><strong>${r.name}</strong></td><td>${r.cat||'—'}</td>
+      <td>${r.received}</td><td>${r.used}</td>
+      <td>
+        <span style="color:${bal<=0?'var(--rose)':'var(--gold2)'};font-weight:600">${bal}</span>
+        <span class="sbar-wrap"><span class="sbar" style="width:${pct}%;background:${bc}"></span></span>
+      </td>
+      <td>${r.unit||'—'}</td><td>${r.alertAt||'—'}</td>
+      <td>₹${r.cost?r.cost.toLocaleString():'—'}</td>
+      <td><span class="badge ${sc}">${sl}</span></td>
+      <td><button class="btn btn-del" onclick="del('stock',${i})">✕</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function renderUsage() {
+  const tb=document.getElementById('usageTbody');
+  if (!db.usage.length) { tb.innerHTML='<tr class="erow"><td colspan="4">No usage recorded</td></tr>'; return; }
+  tb.innerHTML=db.usage.map((r,i)=>`<tr><td>${i+1}</td><td>${r.date}</td><td>${r.name}</td><td>${r.qty}</td></tr>`).join('');
+}
+
+// ═══════════════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════════════
+function updateDash() {
+  // Services inflow
+  const svcCash   = db.services.filter(s=>s.mode==='Cash').reduce((a,s)=>a+s.cost,0);
+  const svcOnline = db.services.filter(s=>s.mode==='Online').reduce((a,s)=>a+s.cost,0);
+  // Product sales inflow
+  const prodCash   = db.swProds.filter(p=>(p.mode||'Cash')==='Cash').reduce((a,p)=>a+p.amount,0);
+  const prodOnline = db.swProds.filter(p=>p.mode==='Online').reduce((a,p)=>a+p.amount,0);
+
+  const cash   = svcCash + prodCash;
+  const online = svcOnline + prodOnline;
+  const exp    = db.expenses.reduce((a,e)=>a+e.amount,0);
+  const net    = cash+online-exp;
+
+  set('d-cash','₹'+cash.toLocaleString());
+  set('d-online','₹'+online.toLocaleString());
+  set('d-exp','₹'+exp.toLocaleString());
+  set('d-net','₹'+net.toLocaleString());
+  set('ds-rev','₹'+(cash+online).toLocaleString());
+  set('ds-cash','₹'+cash.toLocaleString());
+  set('ds-online','₹'+online.toLocaleString());
+  set('ds-exp','₹'+exp.toLocaleString());
+  set('ds-net','₹'+net.toLocaleString());
+  set('d-staff', db.staff.length);
+  set('d-clients', db.services.length);
+  set('d-svcs', db.services.length + db.swProds.length);
+  const alerts=db.stock.filter(s=>{const b=s.received-s.used;return b<=0||(s.alertAt>0&&b<=s.alertAt);});
+  set('d-alerts', alerts.length);
+  const adiv=document.getElementById('dashAlerts');
+  if (!alerts.length) { adiv.innerHTML='<p style="color:var(--t3);font-size:13px;font-style:italic">All products well stocked ✓</p>'; }
+  else adiv.innerHTML=alerts.map(s=>{
+    const b=s.received-s.used;
+    return `<div class="abox ${b<=0?'abox-r':'abox-w'}" style="margin-bottom:8px">
+      <strong>${s.name}</strong> — ${b<=0?'⚠ OUT OF STOCK':'LOW STOCK: '+b+' '+(s.unit||'units')+' remaining'}
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════
+// GENERIC DELETE
+// ═══════════════════════════════════════
+function del(table, idx) {
+  if (!confirm('Remove this entry?')) return;
+
+  // If deleting a product sale → restore stock quantity
+  if (table === 'swProds') {
+    const sale = db.swProds[idx];
+    const stockItem = db.stock.find(s => s.name.toLowerCase() === sale.product.toLowerCase());
+    if (stockItem) {
+      stockItem.used = Math.max(0, stockItem.used - sale.qty);
+      // Also remove matching usage log entry
+      const uIdx = db.usage.findIndex(u =>
+        u.name.toLowerCase() === sale.product.toLowerCase() &&
+        u.qty === sale.qty && u.date === sale.date
+      );
+      if (uIdx > -1) db.usage.splice(uIdx, 1);
+    }
+  }
+
+  db[table].splice(idx,1);
+  saveDB();
+  if (table==='services')   { renderSvcs(); updateCFSummary(); renderSwSvcs(); updateSwRev(); refreshDataLists(); }
+  if (table==='expenses')   { renderExps(); updateCFSummary(); }
+  if (table==='attendance') renderAtt();
+  if (table==='swProds')    { renderSwProds(); updateSwRev(); renderStock(); renderUsage(); updateCFSummary(); }
+  if (table==='stock')      { renderStock(); refreshDataLists(); }
+  updateDash();
+}
+
+// ═══════════════════════════════════════
+// ADMIN — PIN
+// ═══════════════════════════════════════
+let pinBuffer='';
+
+function openAdmin() {
+  pinBuffer='';
+  updatePinDots();
+  document.getElementById('pinErr').textContent='';
+  document.getElementById('pinOverlay').classList.add('on');
+}
+
+function pinPress(k) {
+  if (k==='C') { pinBuffer=pinBuffer.slice(0,-1); updatePinDots(); return; }
+  if (pinBuffer.length>=4) return;
+  pinBuffer+=k;
+  updatePinDots();
+  if (pinBuffer.length===4) setTimeout(checkPin,150);
+}
+
+function updatePinDots() {
+  for(let i=0;i<4;i++) {
+    document.getElementById('pd'+i).classList.toggle('fill', i<pinBuffer.length);
+  }
+}
+
+function checkPin() {
+  if (pinBuffer===db.pin) {
+    document.getElementById('pinOverlay').classList.remove('on');
+    document.getElementById('adminOverlay').classList.add('on');
+    pinBuffer='';
+    updatePinDots();
+    renderAdminChips();
+  } else {
+    document.getElementById('pinErr').textContent='Incorrect PIN. Try again.';
+    pinBuffer='';
+    updatePinDots();
+  }
+}
+
+// ═══════════════════════════════════════
+// ADMIN — TABS
+// ═══════════════════════════════════════
+function aTab(name, btn) {
+  ['aStaff','aServices','aProducts','aSettings'].forEach(id=>document.getElementById(id).style.display='none');
+  document.getElementById('a'+name.charAt(0).toUpperCase()+name.slice(1)).style.display='block';
+  document.querySelectorAll('.atab').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+}
+
+// ═══════════════════════════════════════
+// ADMIN — STAFF
+// ═══════════════════════════════════════
+function addStaff() {
+  const name=v('a-sname').trim(), gender=v('a-sgender');
+  if (!name) return alert('Enter staff name');
+  if (db.staff.find(s=>s.name.toLowerCase()===name.toLowerCase())) return alert('Staff already exists');
+  db.staff.push({name,gender});
+  saveDB(); renderAdminChips(); refreshDataLists();
+  document.getElementById('a-sname').value='';
+}
+
+function removeStaff(i) { db.staff.splice(i,1); saveDB(); renderAdminChips(); refreshDataLists(); }
+
+// ═══════════════════════════════════════
+// ADMIN — SERVICES
+// ═══════════════════════════════════════
+function addAdminSvc() {
+  const name=v('a-svname').trim(), price=parseFloat(document.getElementById('a-svprice').value)||0;
+  if (!name) return alert('Enter service name');
+  db.adminSvcs.push({name,price});
+  saveDB(); renderAdminChips(); refreshDataLists();
+  clear('a-svname','a-svprice');
+}
+
+function removeAdminSvc(i) { db.adminSvcs.splice(i,1); saveDB(); renderAdminChips(); refreshDataLists(); }
+
+// ═══════════════════════════════════════
+// ADMIN — PRODUCTS
+// ═══════════════════════════════════════
+function addAdminProd() {
+  const name=v('a-pname').trim(), cat=v('a-pcat').trim();
+  if (!name) return alert('Enter product name');
+  db.adminProds.push({name,cat});
+  saveDB(); renderAdminChips(); refreshDataLists();
+  clear('a-pname','a-pcat');
+}
+
+function removeAdminProd(i) { db.adminProds.splice(i,1); saveDB(); renderAdminChips(); refreshDataLists(); }
+
+// ═══════════════════════════════════════
+// ADMIN — RENDER CHIPS
+// ═══════════════════════════════════════
+function renderAdminChips() {
+  const sc=document.getElementById('staffChips');
+  sc.innerHTML=db.staff.length
+    ? db.staff.map((s,i)=>`<div class="chip"><span>${s.name} <small style="color:var(--t3)">(${s.gender})</small></span><button onclick="removeStaff(${i})">×</button></div>`).join('')
+    : '<span style="color:var(--t3);font-size:12px">No staff added yet</span>';
+
+  const vc=document.getElementById('svcChips');
+  vc.innerHTML=db.adminSvcs.length
+    ? db.adminSvcs.map((s,i)=>`<div class="chip"><span>${s.name}${s.price?' — ₹'+s.price:''}</span><button onclick="removeAdminSvc(${i})">×</button></div>`).join('')
+    : '<span style="color:var(--t3);font-size:12px">No services added yet</span>';
+
+  const pc=document.getElementById('prodChips');
+  pc.innerHTML=db.adminProds.length
+    ? db.adminProds.map((p,i)=>`<div class="chip"><span>${p.name}${p.cat?' ('+p.cat+')':''}</span><button onclick="removeAdminProd(${i})">×</button></div>`).join('')
+    : '<span style="color:var(--t3);font-size:12px">No products added yet</span>';
+}
+
+// ═══════════════════════════════════════
+// ADMIN — SETTINGS
+// ═══════════════════════════════════════
+function changePin() {
+  const p1=document.getElementById('a-pin1').value.trim();
+  const p2=document.getElementById('a-pin2').value.trim();
+  const msg=document.getElementById('pinMsg');
+  if (!/^\d{4}$/.test(p1)) { msg.style.color='var(--rose)'; msg.textContent='PIN must be exactly 4 digits'; return; }
+  if (p1!==p2) { msg.style.color='var(--rose)'; msg.textContent='PINs do not match'; return; }
+  db.pin=p1; saveDB();
+  msg.style.color='var(--sage)'; msg.textContent='✓ PIN updated successfully';
+  document.getElementById('a-pin1').value='';
+  document.getElementById('a-pin2').value='';
+}
+
+function clearAllData() {
+  if (!confirm('This will permanently delete ALL salon data. Are you sure?')) return;
+  if (!confirm('Last chance — this cannot be undone!')) return;
+  const pin=db.pin;
+  db={...JSON.parse(JSON.stringify(defaults)),pin};
+  saveDB(); refreshAll(); updateDash();
+  document.getElementById('adminOverlay').classList.remove('on');
+  alert('All data cleared.');
+}
+
+// ═══════════════════════════════════════
+// EXCEL EXPORTS
+// ═══════════════════════════════════════
+
+/* helper: make a worksheet with a title row, sub-header, then data */
+function makeWS(sectionTitle, headers, rows) {
+  const aoa = [
+    [sectionTitle], // Row 1 – section heading
+    [],             // Row 2 – blank spacer
+    headers,        // Row 3 – column headers
+    ...rows         // Data rows
+  ];
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+
+  // Style the title row (bold + merge across headers width)
+  const range = XLSX.utils.decode_range(ws['!ref']);
+  ws['!merges'] = [{ s:{r:0,c:0}, e:{r:0,c:headers.length-1} }];
+
+  // Column widths – auto size
+  ws['!cols'] = headers.map((_,i) => {
+    let max = headers[i] ? headers[i].length : 10;
+    rows.forEach(r => { if(r[i]!==undefined&&r[i]!==null) max=Math.max(max,String(r[i]).length); });
+    return {wch: Math.min(max+4, 40)};
+  });
+  return ws;
+}
+
+function exportSheet(which) {
+  const wb = XLSX.utils.book_new();
+  if (which==='cashflow') {
+    const svcRows = db.services.map((r,i)=>[i+1,r.date,r.client,r.service,r.cost,r.mode,r.staff||'']);
+    const ws1 = makeWS(
+      'CASH FLOW — CLIENT SERVICES',
+      ['#','Date','Client Name','Service Type','Cost (₹)','Payment Mode','Staff Assigned'],
+      svcRows
+    );
+    XLSX.utils.book_append_sheet(wb, ws1, 'Client Services');
+
+    const expRows = db.expenses.map((r,i)=>[i+1,r.date,r.type,r.desc||'',r.qty??'',r.unit||'',r.amount]);
+    const ws2 = makeWS(
+      'CASH FLOW — EXPENSES',
+      ['#','Date','Expense Type','Description','Qty Purchased','Unit','Amount (₹)'],
+      expRows
+    );
+    XLSX.utils.book_append_sheet(wb, ws2, 'Expenses');
+
+    const svcCash2 = db.services.filter(s=>s.mode==='Cash').reduce((a,s)=>a+s.cost,0);
+    const svcOnl2  = db.services.filter(s=>s.mode==='Online').reduce((a,s)=>a+s.cost,0);
+    const prdCash2 = db.swProds.filter(p=>(p.mode||'Cash')==='Cash').reduce((a,p)=>a+p.amount,0);
+    const prdOnl2  = db.swProds.filter(p=>p.mode==='Online').reduce((a,p)=>a+p.amount,0);
+    const cash2    = svcCash2+prdCash2, online2 = svcOnl2+prdOnl2;
+    const exp2     = db.expenses.reduce((a,e)=>a+e.amount,0);
+    const ws3 = makeWS(
+      'CASH FLOW — DAILY SUMMARY (Services + Product Sales − Expenses)',
+      ['Cash Inflow (₹)','Online Inflow (₹)','Total Revenue (₹)','Total Expenses (₹)','Net Balance (₹)'],
+      [[cash2, online2, cash2+online2, exp2, cash2+online2-exp2]]
+    );
+    XLSX.utils.book_append_sheet(wb, ws3, 'Daily Summary');
+    XLSX.writeFile(wb,'Salon_CashFlow.xlsx');
+
+  } else if (which==='attendance') {
+    const rows=db.attendance.map((r,i)=>[i+1,r.date,r.name,r.gender,r.status||'Present',r.inT||'',r.outT||'',r.hours,r.reason||'']);
+    const ws=makeWS(
+      'STAFF ATTENDANCE REGISTER',
+      ['#','Date','Staff Name','Gender','Status','In Time','Out Time','Hours Worked','Reason / Note'],
+      rows
+    );
+    // Summary sheet
+    const cnt=s=>db.attendance.filter(r=>(r.status||'Present')===s).length;
+    const wsSummary=makeWS(
+      'ATTENDANCE SUMMARY',
+      ['Category','Count'],
+      [
+        ['Total Records', db.attendance.length],
+        ['Present',  cnt('Present')],
+        ['Half-Day', cnt('Half-Day')],
+        ['Absent',   cnt('Absent')],
+        ['On Leave', cnt('Leave')]
+      ]
+    );
+    XLSX.utils.book_append_sheet(wb, ws, 'Attendance Register');
+    XLSX.utils.book_append_sheet(wb, wsSummary, 'Summary');
+    XLSX.writeFile(wb,'Salon_Attendance.xlsx');
+
+  } else if (which==='staffwork') {
+    // Services pulled from Cash Flow (staff assigned entries only)
+    const staffSvcs = db.services.filter(r=>r.staff&&r.staff.trim()!=='');
+    const sRows=staffSvcs.map((r,i)=>[i+1,r.date,r.staff,r.client,r.service||'',r.cost,r.mode]);
+    const ws1=makeWS(
+      'STAFF WORK — SERVICES HANDLED (from Cash Flow)',
+      ['#','Date','Staff Name','Client Name','Service Type','Amount (₹)','Payment Mode'],
+      sRows
+    );
+    XLSX.utils.book_append_sheet(wb, ws1, 'Staff Services');
+
+    const pRows=db.swProds.map((r,i)=>[i+1,r.date,r.staff,r.product,r.qty,r.amount,r.mode||'Cash']);
+    const ws2=makeWS(
+      'STAFF WORK — PRODUCTS SOLD',
+      ['#','Date','Staff Name','Product Name','Qty','Amount (₹)','Payment Mode'],
+      pRows
+    );
+    XLSX.utils.book_append_sheet(wb, ws2, 'Products Sold');
+
+    const map={};
+    staffSvcs.forEach(r=>{ if(!map[r.staff]) map[r.staff]={svc:0,prod:0}; map[r.staff].svc+=r.cost; });
+    db.swProds.forEach(r=>{ if(!map[r.staff]) map[r.staff]={svc:0,prod:0}; map[r.staff].prod+=r.amount; });
+    const revRows=Object.entries(map).map(([nm,val])=>[nm,val.svc,val.prod,val.svc+val.prod]);
+    const ws3=makeWS(
+      'STAFF WORK — REVENUE SUMMARY PER STAFF',
+      ['Staff Name','Services Revenue (₹)','Products Revenue (₹)','Total Contribution (₹)'],
+      revRows
+    );
+    XLSX.utils.book_append_sheet(wb, ws3, 'Revenue Summary');
+    XLSX.writeFile(wb,'Salon_StaffWork.xlsx');
+
+  } else if (which==='stock') {
+    const sRows=db.stock.map((r,i)=>{
+      const bal=r.received-r.used;
+      let status=bal<=0?'OUT OF STOCK':(r.alertAt>0&&bal<=r.alertAt?'LOW STOCK':'OK');
+      return [i+1,r.date,r.name,r.cat||'',r.received,r.used,bal,r.unit||'',r.alertAt||'',r.cost||'',status];
+    });
+    const ws1=makeWS(
+      'STOCK MANAGEMENT — CURRENT STOCK LEVELS',
+      ['#','Date Added','Product Name','Category','Received','Used','Balance','Unit','Alert At','Cost (₹)','Status'],
+      sRows
+    );
+    XLSX.utils.book_append_sheet(wb, ws1, 'Stock Levels');
+
+    const uRows=db.usage.map((r,i)=>[i+1,r.date,r.name,r.qty]);
+    const ws2=makeWS(
+      'STOCK MANAGEMENT — DAILY USAGE HISTORY',
+      ['#','Date','Product Name','Qty Used'],
+      uRows
+    );
+    XLSX.utils.book_append_sheet(wb, ws2, 'Usage History');
+    XLSX.writeFile(wb,'Salon_Stock.xlsx');
+  }
+}
+
+// ═══════════════════════════════════════
+// EXPORT ALL — Master Excel with all sheets
+// ═══════════════════════════════════════
+function exportAll() {
+  const wb = XLSX.utils.book_new();
+
+  // ── DASHBOARD SUMMARY ──
+  const svcCash  = db.services.filter(s=>s.mode==='Cash').reduce((a,s)=>a+s.cost,0);
+  const svcOnl   = db.services.filter(s=>s.mode==='Online').reduce((a,s)=>a+s.cost,0);
+  const prdCash  = db.swProds.filter(p=>(p.mode||'Cash')==='Cash').reduce((a,p)=>a+p.amount,0);
+  const prdOnl   = db.swProds.filter(p=>p.mode==='Online').reduce((a,p)=>a+p.amount,0);
+  const cash  = svcCash + prdCash;
+  const online= svcOnl  + prdOnl;
+  const exp   = db.expenses.reduce((a,e)=>a+e.amount,0);
+  const net   = cash+online-exp;
+  const alerts= db.stock.filter(s=>{const b=s.received-s.used;return b<=0||(s.alertAt>0&&b<=s.alertAt);});
+  const attCnt= s=>db.attendance.filter(r=>(r.status||'Present')===s).length;
+  const ws0=makeWS(
+    'SALON MANAGER PRO — MASTER EXPORT  |  '+new Date().toLocaleDateString('en-IN'),
+    ['Metric','Value'],
+    [
+      ['Cash Inflow (₹)', cash],
+      ['Online Inflow (₹)', online],
+      ['Total Revenue (₹)', cash+online],
+      ['Total Expenses (₹)', exp],
+      ['Net Balance (₹)', net],
+      ['Total Client Services', db.services.length],
+      ['Total Product Sales', db.swProds.length],
+      ['Staff on Record', db.staff.length],
+      ['Attendance Records', db.attendance.length],
+      ['Present', attCnt('Present')],
+      ['Half-Day', attCnt('Half-Day')],
+      ['Absent', attCnt('Absent')],
+      ['On Leave', attCnt('Leave')],
+      ['Stock Alerts', alerts.length],
+      ['Export Generated', new Date().toLocaleString('en-IN')]
+    ]
+  );
+  XLSX.utils.book_append_sheet(wb, ws0, '📊 Dashboard Summary');
+
+  // ── STAFF REGISTER ──
+  const stfRows=db.staff.map((s,i)=>[i+1,s.name,s.gender]);
+  const wsStf=makeWS('STAFF REGISTER',['#','Staff Name','Gender'],stfRows);
+  XLSX.utils.book_append_sheet(wb, wsStf, '👥 Staff Register');
+
+  // ── CLIENT SERVICES ──
+  const svcRows=db.services.map((r,i)=>[i+1,r.date,r.client,r.service,r.cost,r.mode,r.staff||'']);
+  const wsS=makeWS('CLIENT SERVICES',['#','Date','Client Name','Service Type','Cost (₹)','Payment Mode','Staff'],svcRows);
+  XLSX.utils.book_append_sheet(wb, wsS, '💄 Client Services');
+
+  // ── EXPENSES ──
+  const expRows=db.expenses.map((r,i)=>[i+1,r.date,r.type,r.desc||'',r.qty??'',r.unit||'',r.amount]);
+  const wsE=makeWS('EXPENSES',['#','Date','Type','Description','Qty','Unit','Amount (₹)'],expRows);
+  XLSX.utils.book_append_sheet(wb, wsE, '📤 Expenses');
+
+  // ── ATTENDANCE ──
+  const attRows=db.attendance.map((r,i)=>[i+1,r.date,r.name,r.gender,r.status||'Present',r.inT||'',r.outT||'',r.hours,r.reason||'']);
+  const wsA=makeWS('STAFF ATTENDANCE',['#','Date','Staff Name','Gender','Status','In Time','Out Time','Hours Worked','Reason / Note'],attRows);
+  XLSX.utils.book_append_sheet(wb, wsA, '🕐 Attendance');
+
+  // ── STAFF SERVICES (from Cash Flow) ──
+  const staffSvcRows = db.services.filter(r=>r.staff&&r.staff.trim()!=='')
+    .map((r,i)=>[i+1,r.date,r.staff,r.client,r.service||'',r.cost,r.mode]);
+  const wsSS=makeWS('STAFF WORK — SERVICES (from Cash Flow)',['#','Date','Staff Name','Client Name','Service Type','Amount (₹)','Mode'],staffSvcRows);
+  XLSX.utils.book_append_sheet(wb, wsSS, '✂ Staff Services');
+
+  // ── STAFF PRODUCTS SOLD ──
+  const swPRows=db.swProds.map((r,i)=>[i+1,r.date,r.staff,r.product,r.qty,r.amount,r.mode||'Cash']);
+  const wsSP=makeWS('STAFF WORK — PRODUCTS SOLD',['#','Date','Staff','Product','Qty','Amount (₹)','Payment Mode'],swPRows);
+  XLSX.utils.book_append_sheet(wb, wsSP, '🛍 Staff Products');
+
+  // ── STAFF REVENUE SUMMARY ──
+  const revMap={};
+  db.services.filter(r=>r.staff&&r.staff.trim()!=='').forEach(r=>{ if(!revMap[r.staff]) revMap[r.staff]={svc:0,prod:0}; revMap[r.staff].svc+=r.cost; });
+  db.swProds.forEach(r=>{ if(!revMap[r.staff]) revMap[r.staff]={svc:0,prod:0}; revMap[r.staff].prod+=r.amount; });
+  const revRows=Object.entries(revMap).map(([nm,val])=>[nm,val.svc,val.prod,val.svc+val.prod]);
+  const wsRev=makeWS('STAFF REVENUE SUMMARY',['Staff Name','Services (₹)','Products (₹)','Total (₹)'],revRows);
+  XLSX.utils.book_append_sheet(wb, wsRev, '📈 Staff Revenue');
+
+  // ── STOCK LEVELS ──
+  const stRows=db.stock.map((r,i)=>{
+    const b=r.received-r.used;
+    const status=b<=0?'OUT OF STOCK':(r.alertAt>0&&b<=r.alertAt?'LOW STOCK':'OK');
+    return [i+1,r.date,r.name,r.cat||'',r.received,r.used,b,r.unit||'',r.alertAt||'',r.cost||'',status];
+  });
+  const wsSt=makeWS('CURRENT STOCK LEVELS',['#','Date','Product','Category','Received','Used','Balance','Unit','Alert At','Cost (₹)','Status'],stRows);
+  XLSX.utils.book_append_sheet(wb, wsSt, '📦 Stock Levels');
+
+  // ── USAGE HISTORY ──
+  const usRows=db.usage.map((r,i)=>[i+1,r.date,r.name,r.qty]);
+  const wsUs=makeWS('STOCK USAGE HISTORY',['#','Date','Product Name','Qty Used'],usRows);
+  XLSX.utils.book_append_sheet(wb, wsUs, '🔧 Usage History');
+
+  XLSX.writeFile(wb,'Salon_MasterExport_'+td()+'.xlsx');
+}
+
+// ═══════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════
+function v(id) { return document.getElementById(id)?.value?.trim()||''; }
+function n(id) { return parseFloat(document.getElementById(id)?.value)||0; }
+function set(id,val) { const el=document.getElementById(id); if(el) el.textContent=val; }
+function clear(...ids) { ids.forEach(id=>{const el=document.getElementById(id);if(el)el.value='';}); }
+</script>
+</body>
+</html>
